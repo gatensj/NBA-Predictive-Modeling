@@ -1,10 +1,11 @@
 import scrapy
-
+import json
 
 class EspnSpider(scrapy.Spider):
     name = 'espn'
     allowed_domains = ['teamrankings.com']
     start_urls = ['https://www.teamrankings.com/nba/stat/points-per-game']
+    kwargs = []
 
     def parse(self, response):
         information = response.xpath('//h1[@id="h1-title"]/text()').get()
@@ -31,6 +32,8 @@ class EspnSpider(scrapy.Spider):
         #print(good_info)
         res = dict(zip(team_names, good_info))
         print(res)
+        with open("output.txt", "w") as f:
+            f.write(json.dumps(res))
 
         return {"good_info": "good_info"}
 
