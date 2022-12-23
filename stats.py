@@ -3,13 +3,17 @@ import openpyxl
 import scrapy
 from scrapy.crawler import CrawlerProcess
 from diamond_jay.diamond_jay.spiders.espn import EspnSpider
-
+import json
 
 print('hello world')
 
 season_factors = leaguedashteamstats.LeagueDashTeamStats(
     season='2022-23', measure_type_detailed_defense="Four Factors",
 ).get_data_frames()[0]
+
+season_factors_dict = leaguedashteamstats.LeagueDashTeamStats(
+    season='2022-23', measure_type_detailed_defense="Four Factors",
+).get_dict()
 
 season_factors = season_factors.drop(columns=[
     'TEAM_ID', 'GP', 'W', 'L', 'GP_RANK', 'W_RANK', 'L_RANK', 'W_PCT_RANK', 'MIN_RANK', 'EFG_PCT_RANK', 'FTA_RATE_RANK',
@@ -28,9 +32,11 @@ process = CrawlerProcess({
 process.crawl(EspnSpider)
 process.start() # the script will block here until the crawling is finished
 
-print(" ")
-print(" ")
-print(" ")
-print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
-print(process)
-print('goodbye moon')
+f = open("output.txt", "r")
+my_output = f.read()
+points_results = json.loads(my_output)
+
+print("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx")
+print("   ")
+print(points_results)
+print("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx")
