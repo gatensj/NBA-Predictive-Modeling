@@ -1,11 +1,53 @@
 from nba_api.stats.endpoints import leaguedashteamstats
+from scrapy.crawler import CrawlerProcess
+from diamond_jay.diamond_jay.spiders.firstpoints import FirstHalfPointsSpider
+from diamond_jay.diamond_jay.spiders.secondpoints import SecondHalfPointsSpider
+from diamond_jay.diamond_jay.spiders.totalpoints import TotalPointsSpider
 import openpyxl
 import scrapy
-from scrapy.crawler import CrawlerProcess
-from diamond_jay.diamond_jay.spiders.espn import EspnSpider
 import json
 
-print('hello world')
+process = CrawlerProcess({
+    'USER_AGENT': 'Mozilla/4.0 (compatible; MSIE 7.0; Windows NT 5.1)'
+})
+
+
+'''
+process.crawl(FirstHalfPointsSpider)
+process.start() # the script will block here until the crawling is finished
+print(" ")
+print(" ")
+print(" ")
+print(" ")
+print(" ")
+print(" ")
+print(" ")
+'''
+
+'''
+process.crawl(SecondHalfPointsSpider)
+process.start() # the script will block here until the crawling is finished
+print(" ")
+print(" ")
+print(" ")
+print(" ")
+print(" ")
+print(" ")
+print(" ")
+'''
+
+'''
+process.crawl(TotalPointsSpider)
+process.start() # the script will block here until the crawling is finished
+print(" ")
+print(" ")
+print(" ")
+print(" ")
+print(" ")
+print(" ")
+print(" ")
+'''
+
 
 season_factors = leaguedashteamstats.LeagueDashTeamStats(
     season='2022-23', measure_type_detailed_defense="Four Factors",
@@ -24,19 +66,16 @@ season_factors = season_factors.drop(columns=[
 print(season_factors)
 season_factors.to_excel('nba_stats.xlsx', sheet_name='Four Factors')
 
+print(" ")
+print(" ")
+print(" ")
+print(season_factors_dict)
 
-process = CrawlerProcess({
-    'USER_AGENT': 'Mozilla/4.0 (compatible; MSIE 7.0; Windows NT 5.1)'
-})
-
-process.crawl(EspnSpider)
-process.start() # the script will block here until the crawling is finished
-
-f = open("output.txt", "r")
+'''
+f = open("total-points.txt", "r")
 my_output = f.read()
 points_results = json.loads(my_output)
 
-print("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx")
 print("   ")
 print(points_results)
-print("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx")
+'''
