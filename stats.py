@@ -63,13 +63,24 @@ season_factors = season_factors.drop(columns=[
     'OPP_OREB_PCT_RANK', 'CFID', 'CFPARAMS', 'W_PCT', 'MIN'
 ])
 
+team_info = season_factors_dict['resultSets']
+resultSets = team_info[0]
+rowSet = resultSets['rowSet']
+
+team_data = []
+for items in rowSet:
+    team_name = items.pop(1)
+    team_values = items
+    my_dict = {team_name: team_values}
+    team_data.append(my_dict)
+
 print(season_factors)
 season_factors.to_excel('nba_stats.xlsx', sheet_name='Four Factors')
 
 print(" ")
 print(" ")
 print(" ")
-print(season_factors_dict)
+print(team_data)
 
 '''
 f = open("total-points.txt", "r")

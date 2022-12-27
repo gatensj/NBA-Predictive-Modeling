@@ -1,9 +1,6 @@
-from datetime import datetime, timezone
+from datetime import timezone
 from dateutil import parser
 from nba_api.live.nba.endpoints import scoreboard
-from nba_api.stats.static import teams
-from nba_api.stats.endpoints import leaguegamefinder
-from nba_api.live.nba.endpoints import boxscore
 from scrapy.crawler import CrawlerProcess
 
 from diamond_jay.diamond_jay.spiders.secondpoints import SecondHalfPointsSpider
@@ -52,8 +49,7 @@ print(" ")
 print(" ")
 '''
 
-f = "{gameId}: {awayTeam} vs. {homeTeam} @ {gameTimeLTZ}"
-
+#TODO: Figure out how to change the date of the Scoreboard
 board = scoreboard.ScoreBoard()
 
 print(" ")
@@ -66,14 +62,52 @@ home_teams = []
 away_teams = []
 
 # make a list of home and away games
+print("Real time scores: ")
 for game in games:
     gameTimeLTZ = parser.parse(game["gameTimeUTC"]).replace(tzinfo=timezone.utc).astimezone(tz=None)
-    #print(f.format(gameId=game['gameId'], awayTeam=game['awayTeam']['teamName'], homeTeam=game['homeTeam']['teamName'], gameTimeLTZ=gameTimeLTZ))
     gameId = game['gameId']
 
-    #TODO: okay now we have to figure out what the score is at halftime.
-    #print(game['homeTeam']['teamCity'] + ": " + str(game['homeTeam']['score']))
-    #print(game['awayTeam']['teamCity'] + ": " + str(game['awayTeam']['score']))
+    print(game['homeTeam']['teamCity'] + ": " + str(game['homeTeam']['score']))
+    print(game['awayTeam']['teamCity'] + ": " + str(game['awayTeam']['score']))
+
+    home_scores_by_period = game['homeTeam']['periods']
+    home_first_half_result = [item for item in home_scores_by_period if item.get('period') < 3]
+    home_second_half_result = [item for item in home_scores_by_period if item.get('period') > 2]
+
+    away_scores_by_period = game['awayTeam']['periods']
+    away_first_half_result = [item for item in away_scores_by_period if item.get('period') < 3]
+    away_second_half_result = [item for item in away_scores_by_period if item.get('period') > 2]
+
+    home_team_first_half_points = 0
+    for period in home_first_half_result:
+        home_team_first_half_points = home_team_first_half_points + period['score']
+
+    away_team_first_half_points = 0
+    for period in away_first_half_result:
+        away_team_first_half_points = away_team_first_half_points + period['score']
+
+    home_team_second_half_points = 0
+    for period in home_second_half_result:
+        home_team_second_half_points = home_team_second_half_points + period['score']
+
+    away_team_second_half_points = 0
+    for period in away_second_half_result:
+        away_team_second_half_points = away_team_second_half_points + period['score']
+
+    print("First Half for " + game['awayTeam']['teamCity'] + ": "  + str(away_team_first_half_points))
+    print("First Half for " + game['homeTeam']['teamCity'] + ": "  + str(home_team_first_half_points))
+    first_half_totals = away_team_first_half_points + home_team_first_half_points
+    print("First Half Totals for " + game['awayTeam']['teamCity'] + " vs "  + game['homeTeam']['teamCity'] + " " + str(first_half_totals))
+    print("Second Half for " + game['homeTeam']['teamCity'] + ": "  + str(home_team_second_half_points))
+    print("Second Half for " + game['awayTeam']['teamCity'] + ": " + str(away_team_second_half_points))
+    second_half_totals = away_team_second_half_points + home_team_second_half_points
+    print("Second Half Totals for " + game['awayTeam']['teamCity'] + " vs " + game['homeTeam']['teamCity'] + " " + str(second_half_totals))
+
+    total_score = game['homeTeam']['score'] + game['awayTeam']['score']
+    print("Total: " + str(total_score))
+    print(" ")
+    print(" ")
+    print(" ")
 
     if game['homeTeam']['teamCity'] == "LA":
         home_teams.append(game['awayTeam']['teamCity'] + " " + game['awayTeam']['teamName'])
@@ -85,17 +119,17 @@ for game in games:
     else:
         away_teams.append(game['awayTeam']['teamCity'])
 
-f = open("total-points.txt", "r")
-#f = open("2nd-half-points.txt", "r")
-#f = open("1st-half-points.txt", "r")
+#TODO: refactor so we can pass the file name so we can get the 1st & 2nd half predictions
+file = open("total-points.txt", "r")
+#file = open("2nd-half-points.txt", "r")
+#file = open("1st-half-points.txt", "r")
 
-my_output = f.read()
+my_output = file.read()
 points_results = json.loads(my_output)
 
 filtered_home_dict = {k: v for k, v in points_results.items() if k in home_teams}
 filtered_away_dict = {k: v for k, v in points_results.items() if k in away_teams}
 
-# TODO: okay we have to loop through the dict based on the teams
 home_teams_list = [key for key in filtered_home_dict.keys()]
 away_teams_list = [key for key in filtered_away_dict.keys()]
 
@@ -117,9 +151,7 @@ for team in home_teams_list:
     for points in home_team_float_list:
         home_points_totals = home_points_totals + points
     average_team_points = home_points_totals / 4
-
     total_teams_dict[team] = average_team_points
-    #print(team + " avg points " + str(average_team_points))
 
 # use the list of away teams and use it against the scrapped data
 for team in away_teams_list:
@@ -137,11 +169,10 @@ for team in away_teams_list:
     for points in away_team_float_list:
         away_points_totals = away_points_totals + points
     average_team_points = away_points_totals / 4
-
     total_teams_dict[team] = average_team_points
-    #print(team + " avg points " + str(average_team_points))
 
 # take the avg of the home/away points total and add them back up
+print("Predictive Score: ")
 for game in games:
     home_team = game['homeTeam']['teamCity']
     away_team = game['awayTeam']['teamCity']
@@ -158,9 +189,15 @@ for game in games:
     print(" ")
 
 
+# TODO: Get the O/U from the Sports Books
+print("Daily Line info: ")
+
+
 '''
-#print(filtered_home_dict)
-#print(filtered_away_dict)
+from nba_api.stats.static import teams
+from nba_api.stats.endpoints import leaguegamefinder
+from nba_api.live.nba.endpoints import boxscore
+
 
 nba_teams = teams.get_teams()
 sixers = [team for team in nba_teams if team['abbreviation'] == 'PHI'][0]
@@ -172,8 +209,4 @@ games = gamefinder.get_data_frames()[0]
 games.head()
 print(games)
 print(games['GAME_ID'])
-
-print(" ")
-print("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx")
-print(" ")
 '''
