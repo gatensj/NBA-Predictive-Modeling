@@ -8,6 +8,7 @@ from diamond_jay.diamond_jay.spiders.totalpoints import TotalPointsSpider
 from diamond_jay.diamond_jay.spiders.firstpoints import FirstHalfPointsSpider
 
 import json
+import requests
 
 process = CrawlerProcess({
     'USER_AGENT': 'Mozilla/4.0 (compatible; MSIE 7.0; Windows NT 5.1)'
@@ -110,14 +111,24 @@ for game in games:
     print(" ")
 
     if game['homeTeam']['teamCity'] == "LA":
-        home_teams.append(game['awayTeam']['teamCity'] + " " + game['awayTeam']['teamName'])
+        home_teams.append(game['homeTeam']['teamCity'] + " " + game['homeTeam']['teamName'])
+    elif game['homeTeam']['teamCity'] == "Oklahoma City":
+        home_teams.append("Okla City")
+    elif game['homeTeam']['teamCity'] == "Los Angeles":
+        home_teams.append("LA Lakers")
     else:
         home_teams.append(game['homeTeam']['teamCity'])
 
     if game['awayTeam']['teamCity'] == "LA":
         away_teams.append(game['awayTeam']['teamCity'] + " " + game['awayTeam']['teamName'])
+    elif game['awayTeam']['teamCity'] == "Oklahoma City":
+        away_teams.append("Okla City")
+    elif game['awayTeam']['teamCity'] == "Los Angeles":
+        away_teams.append("LA Lakers")
     else:
         away_teams.append(game['awayTeam']['teamCity'])
+
+
 
 #TODO: refactor so we can pass the file name so we can get the 1st & 2nd half predictions
 file = open("total-points.txt", "r")
@@ -176,11 +187,24 @@ print("Predictive Score: ")
 for game in games:
     home_team = game['homeTeam']['teamCity']
     away_team = game['awayTeam']['teamCity']
+
     if home_team == 'LA':
         home_team = game['homeTeam']['teamCity'] + " " + game['homeTeam']['teamName']
+    elif home_team == "Oklahoma City":
+        home_team = "Okla City"
+    elif home_team == "Los Angeles":
+        home_team = "LA Lakers"
+    else:
+        home_team = home_team
 
     if away_team == 'LA':
         away_team = game['awayTeam']['teamCity'] + " " + game['awayTeam']['teamName']
+    elif away_team == "Oklahoma City":
+        away_team = "Okla City"
+    elif away_team == "Los Angeles":
+        away_team = "LA Lakers"
+    else:
+        away_team = away_team
 
     game_total = total_teams_dict[home_team] + total_teams_dict[away_team]
     print(game['awayTeam']['teamName'] + ' VS ' + game['homeTeam']['teamName'])
@@ -189,9 +213,50 @@ for game in games:
     print(" ")
 
 
-# TODO: Get the O/U from the Sports Books
+# TODO: Get the O/U from the Sports Books for historical odds (if we change the scoreboard date)
 print("Daily Line info: ")
 
+API_KEY = 'bd21706b568c46f05ab0aaeb60c6198e'
+SPORT = 'basketball_nba'
+REGION = 'us'
+MARKET = 'totals'
+
+odds_response = requests.get('https://api.the-odds-api.com/v3/odds', params={
+    'api_key': API_KEY,
+    'sport': SPORT,
+    'region': REGION,
+    'mkt': MARKET,
+})
+
+odds_json = json.loads(odds_response.text)
+
+if not odds_json['success']:
+    print(odds_json['msg'])
+
+else:
+    print('Number of events:', len(odds_json['data']))
+
+    # Check your usage
+    print('Remaining requests', odds_response.headers['x-requests-remaining'])
+    print('Used requests', odds_response.headers['x-requests-used'])
+
+predictive_teams_dict = {}
+for item in odds_json['data']:
+    sites = item['sites']
+    points = 0
+    for site in sites:
+        points_list = site['odds']['totals']['points']
+        points = points + float(points_list[0])
+    sites_count = float(item['sites_count'])
+    if sites_count > 0:
+        points = points / float(item['sites_count'])
+    predictive_teams_dict[item['home_team']] = points
+
+print(" ")
+for key, value in predictive_teams_dict.items():
+    print(key + " " + str(value))
+
+#TODO: Compare the Odds v the Predictive v the Actual (we should run this in the day and save the results)
 
 '''
 from nba_api.stats.static import teams
