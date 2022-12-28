@@ -1,4 +1,4 @@
-from datetime import timezone
+from datetime import datetime, timezone
 from dateutil import parser
 from nba_api.live.nba.endpoints import scoreboard
 from scrapy.crawler import CrawlerProcess
@@ -217,6 +217,7 @@ for game in games:
 print("Daily Line info: ")
 
 API_KEY = 'bd21706b568c46f05ab0aaeb60c6198e'
+#API_KEY = "DEBUG"
 SPORT = 'basketball_nba'
 REGION = 'us'
 MARKET = 'totals'
@@ -257,6 +258,14 @@ for key, value in predictive_teams_dict.items():
     print(key + " " + str(value))
 
 #TODO: Compare the Odds v the Predictive v the Actual (we should run this in the day and save the results)
+now = datetime.now()
+
+# Format the date and time as a string
+date_string = now.strftime("%Y-%m-%d")
+filename_title = "predictions-info-"+date_string+'.txt'
+file_contents = json.dumps(total_teams_dict) + " " + json.dumps(predictive_teams_dict)
+with open(filename_title, "w") as f:
+    f.write(file_contents)
 
 '''
 from nba_api.stats.static import teams
