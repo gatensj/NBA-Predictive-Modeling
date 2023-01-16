@@ -8,6 +8,7 @@ from diamond_jay.diamond_jay.spiders.totalpoints import TotalPointsSpider
 from diamond_jay.diamond_jay.spiders.firstpoints import FirstHalfPointsSpider
 
 import json
+import os
 import requests
 
 process = CrawlerProcess({
@@ -38,7 +39,7 @@ print(" ")
 print(" ")
 '''
 
-'''
+
 process.crawl(TotalPointsSpider)
 process.start() # the script will block here until the crawling is finished
 print(" ")
@@ -48,7 +49,6 @@ print(" ")
 print(" ")
 print(" ")
 print(" ")
-'''
 
 #TODO: Figure out how to change the date of the Scoreboard
 board = scoreboard.ScoreBoard()
@@ -145,6 +145,7 @@ home_teams_list = [key for key in filtered_home_dict.keys()]
 away_teams_list = [key for key in filtered_away_dict.keys()]
 
 total_teams_dict = {}
+total_teams_combine_by_home_team = {'0This is my prediction dictionary' : 1}
 
 # use the list of home teams and use it against the scrapped data
 for team in home_teams_list:
@@ -207,6 +208,8 @@ for game in games:
         away_team = away_team
 
     game_total = total_teams_dict[home_team] + total_teams_dict[away_team]
+    total_teams_combine_by_home_team[home_team] = game_total
+
     print(game['awayTeam']['teamName'] + ' VS ' + game['homeTeam']['teamName'])
     print(game_total)
     print(" ")
@@ -241,7 +244,7 @@ else:
     print('Remaining requests', odds_response.headers['x-requests-remaining'])
     print('Used requests', odds_response.headers['x-requests-used'])
 
-predictive_teams_dict = {}
+predictive_teams_dict = {'0This OU dictionary from Odds API' : 2}
 for item in odds_json['data']:
     sites = item['sites']
     points = 0
@@ -263,8 +266,16 @@ now = datetime.now()
 # Format the date and time as a string
 date_string = now.strftime("%Y-%m-%d")
 filename_title = "predictions-info-"+date_string+'.txt'
-file_contents = json.dumps(total_teams_dict) + " " + json.dumps(predictive_teams_dict)
-with open(filename_title, "w") as f:
+
+# Sort the two dicts by ABC
+total_teams_combine_by_home_team_sorted = {k: total_teams_combine_by_home_team[k] for k in sorted(total_teams_combine_by_home_team)}
+predictive_teams_dict_sorted = {k: predictive_teams_dict[k] for k in sorted(predictive_teams_dict)}
+
+file_contents = json.dumps(total_teams_combine_by_home_team_sorted) + " " + json.dumps(predictive_teams_dict_sorted)
+directory = r'C:\Users\jgatens\Downloads\0Stuff-PC\work\code\NBA-Predictive-Modeling\predictions'
+file_path = os.path.join(directory, filename_title)
+
+with open(file_path, "w") as f:
     f.write(file_contents)
 
 '''
